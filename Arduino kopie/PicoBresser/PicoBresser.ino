@@ -15,8 +15,9 @@ byte LORA_CS   = 17; //PICO CSn
 byte LORA_SCK  = 18; //PICO SCK
 byte LORA_MISO = 16; //PICO RX
 byte LORA_MOSI = 19; //PICO TX
-int8_t wait_transmit;
-
+unsigned long lastTransmitTime = 0;
+uint8_t msg_buf[40];
+uint8_t msg_size;
 
 // ============================================================
 // Bresser WeatherSensor class
@@ -68,12 +69,7 @@ void setup()
 // ============================================================
 
 void loop()
-{
-    // ============================================================
-    // Msg for transmitting to Bresser base station
-    // ============================================================
-    uint8_t msg_buf[40];
-    uint8_t msg_size;
+{    
     
     // ============================================================
     // Receiving 
@@ -108,18 +104,19 @@ void loop()
     // ============================================================
     // Transmitting
     // ============================================================
-
-    for(int i=0;i < ws.sensor.size();i++)
-    {
-        if (ws.sensor[i].sensor_id == 0xABEA)
+    if (millis()-lastTransmitTime >= 30) {
+        for(int i=0;i < ws.sensor.size();i++)
+        {
+            if (ws.sensor[i].sensor_id == 0xABEA)
             {
                 Serial.println("Sending to basestation");
                 ws.sensor[i].sensor_id = -1053817806; //use sensor-id of base station
                 msg_size = msgBegin(msg_buf);
                 msg_size += encodeBresser6In1Payload(&msg_buf[msg_size],ws,i);
                 ws.transmit(msg_size, msg_buf);                    
-                wait_transmit = 0;
+                lastTransmitTime = millis();
             }
+        }
     }
-    delay(1000);
+    delay(100);
 }
