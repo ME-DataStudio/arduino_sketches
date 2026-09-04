@@ -1,3 +1,7 @@
+/*
+    BresserWeatherSensor - arduino library
+*/
+
 #include <WeatherSensorCfg.h>
 #include <WeatherSensor.h>
 #include <SPI.h>
@@ -15,12 +19,10 @@ int8_t wait_transmit;
 
 
 // ============================================================
-// Bresser receiver
+// Bresser WeatherSensor class
 // ============================================================
 
 WeatherSensor ws;
-
-
 
 // ============================================================
 // Setup
@@ -39,8 +41,7 @@ void setup()
 
     // --------------------------------------------------------
     // CC1101
-    // --------------------------------------------------------
-    
+    // -------------------------------------------------------- 
     
     SPI.setSCK(LORA_SCK);
     SPI.setRX(LORA_MISO);
@@ -49,7 +50,6 @@ void setup()
     SPI.begin();
 
     Serial.println("SPI initialized");
-
 
     // --------------------------------------------------------
     // Bresser receiver
@@ -69,28 +69,29 @@ void setup()
 
 void loop()
 {
+    // ============================================================
+    // Msg for transmitting to Bresser base station
+    // ============================================================
     uint8_t msg_buf[40];
     uint8_t msg_size;
     
-    // Try to receive and decode one message.
+    // ============================================================
+    // Receiving 
+    // ============================================================
+    
+    // Try to receive and decode one message. Uses multiple bresser decoders
     DecodeStatus status = ws.getMessage();
 
-    if (status == DECODE_OK)
+    if (status == DECODE_OK) 
     {
         Serial.println("Valid Bresser packet received");
+        // print id's from all sensors received. Can be old data. Slots are not cleared in this sketch
         for(int i=0;i < ws.sensor.size();i++)
         {
             Serial.printf("ID: %08X in slot %u\n",
                       ws.sensor[i].sensor_id, i);
-        }
-        // The library normally stores the decoded sensor
-        // in ws.sensor[].
 
-        //if (ws.sensor.size() > 0)
-        //{
-            for(int i=0;i < ws.sensor.size();i++)
-            {
-                if (ws.sensor[i].sensor_id == 0xABEA) {
+            if (ws.sensor[i].sensor_id == 0xABEA) { // this is id of brsser 7in1 with 
 
                     Serial.printf(
                         "ID: %08X  Temp: %.1f C  Humidity: %u %%  RSSI: %.1f dBm, LQI: %u\n",
@@ -100,14 +101,17 @@ void loop()
                         ws.sensor[i].rssi
                         //ws.sensor[i].lqi
                     );
-                }    
-            }
-        //}
+            }    
+        }
     }
+    
+    // ============================================================
+    // Transmitting
+    // ============================================================
+
     for(int i=0;i < ws.sensor.size();i++)
     {
-        if (wait_transmit > 29) {wait_transmit=0;}
-        if (ws.sensor[i].sensor_id == 0xABEA && wait_transmit == 29)
+        if (ws.sensor[i].sensor_id == 0xABEA)
             {
                 Serial.println("Sending to basestation");
                 ws.sensor[i].sensor_id = -1053817806; //use sensor-id of base station
@@ -118,7 +122,4 @@ void loop()
             }
     }
     delay(1000);
-    wait_transmit+=1;
-    Serial.print(wait_transmit);
-
 }
