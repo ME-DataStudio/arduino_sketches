@@ -1,5 +1,9 @@
 /*
-    BresserWeatherSensor - arduino library
+    Receiving and Transmitting Bresser Weathersensor data.
+    I receive from 7in1 and transmit to 6in1 bade station.
+
+    Thanks to matthias-bs his code on receiving, decooding, encoding and transmitting.
+    See https://github.com/matthias-bs
 */
 
 #include <WeatherSensorCfg.h>
@@ -117,7 +121,8 @@ void loop()
                 msg_size = msgBegin(msg_buf);
                 msg_size += encodeBresser6In1Payload(&msg_buf[msg_size],ws,i);
                 ws.transmit(msg_size, msg_buf);                    
-                
+                // reset sensor_id to original so updates come in same slot
+                ws.sensor[i].sensor_id = 0xABEA;
             }
         }
         lastTransmitTime = millis();
