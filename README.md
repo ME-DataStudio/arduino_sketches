@@ -7,6 +7,6 @@ Receiving Bresser weather station and show on EPD.
 Connect to HAOS.  
 Receiving from 7in1 bresser to bresser 6in1 base station
 - got this working in picobresser.
-- Thanks to matthias-bs his code, see https://github.com/matthias-bs
+- Thanks to matthias-bs his code, see https://github.com/matthias-bs. 
 Receiving and sending KAKU. 
 
