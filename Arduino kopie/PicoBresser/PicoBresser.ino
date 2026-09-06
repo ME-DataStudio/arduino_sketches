@@ -34,7 +34,7 @@ void setup()
     Serial.begin(115200);
     Serial.setDebugOutput(true);
 
-    delay(5000);
+    delay(3000);
 
     Serial.println();
     Serial.println("Bresser Weather Station");
@@ -90,12 +90,13 @@ void loop()
             if (ws.sensor[i].sensor_id == 0xABEA) { // this is id of brsser 7in1 with 
 
                     Serial.printf(
-                        "ID: %08X  Temp: %.1f C  Humidity: %u %%  RSSI: %.1f dBm, LQI: %u\n",
+                        "ID: %08X  Temp: %.1f C  Humidity: %u %%  RSSI: %.1f dBm, Wind: %.1f, Wind_fp1: %.1f  \n",
                         ws.sensor[i].sensor_id,
                         ws.sensor[i].w.temp_c,
                         ws.sensor[i].w.humidity,
-                        ws.sensor[i].rssi
-                        //ws.sensor[i].lqi
+                        ws.sensor[i].rssi,
+                        ws.sensor[i].w.wind_avg_meter_sec,
+                        ws.sensor[i].w.wind_avg_meter_sec_fp1
                     );
             }    
         }
@@ -104,19 +105,22 @@ void loop()
     // ============================================================
     // Transmitting
     // ============================================================
-    if (millis()-lastTransmitTime >= 30) {
+    
+    if (millis()-lastTransmitTime >= 20000) {
+        Serial.println("20 seconden voorbij");
         for(int i=0;i < ws.sensor.size();i++)
         {
-            if (ws.sensor[i].sensor_id == 0xABEA)
+            if (ws.sensor[i].sensor_id == 0xABEA || ws.sensor[i].sensor_id == -1053817806)
             {
                 Serial.println("Sending to basestation");
                 ws.sensor[i].sensor_id = -1053817806; //use sensor-id of base station
                 msg_size = msgBegin(msg_buf);
                 msg_size += encodeBresser6In1Payload(&msg_buf[msg_size],ws,i);
                 ws.transmit(msg_size, msg_buf);                    
-                lastTransmitTime = millis();
+                
             }
         }
+        lastTransmitTime = millis();
     }
     delay(100);
 }
